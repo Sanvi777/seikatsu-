@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+生活 Seikatsu — Japan Settlement Guide
 
-## Getting Started
+A full-stack web app that helps foreigners settle into Japan step by step.
 
-First, run the development server:
+🌐 Live Demo: seikatsu-three.vercel.app
+
+✨ Features
+
+🌸 12 Settlement Tasks — Ward office, health insurance, bank account, SIM card, and more
+📝 Interactive Forms — Each task has a custom form to fill in your details
+☁️ Cloud Sync — Progress saved to PostgreSQL database in Tokyo
+👤 User Auth — Sign up / sign in with email
+🗂️ Profile Page — Custom avatar, bio, and settlement stats
+📋 Requests System — Submit tasks for admin approval
+🤖 AI Assistant — Ask questions about Japan life powered by Groq LLaMA
+🌐 Bilingual — English and Japanese (日本語) toggle
+📱 Fully Responsive — Works on mobile and desktop
+⛩️ Sakura UI — Falling cherry blossom petals animation
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 15, TypeScript, Tailwind CSS |
+| Backend | Next.js API Routes |
+| Database | Supabase (PostgreSQL) — hosted in Tokyo |
+| Auth | Supabase Auth |
+| AI | Groq API (LLaMA 3.3 70B) |
+| Deployment | Vercel |
+
+---
+
+## 🚀 Getting Started
 
 ```bash
+# Clone the repo
+git clone https://github.com/Sanvi777/seikatsu-.git
+cd seikatsu-
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Add your Supabase and Groq keys
+
+# Run locally
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🗄️ Database Schema
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sql
+-- User progress tracking
+create table user_progress (
+  user_id uuid references auth.users,
+  completed_tasks integer[]
+);
 
-## Learn More
+-- Task form responses
+create table task_responses (
+  user_id uuid references auth.users,
+  task_id integer,
+  responses jsonb,
+  completed boolean,
+  status text -- pending, approved, rejected
+);
 
-To learn more about Next.js, take a look at the following resources:
+-- User profiles
+create table profiles (
+  id uuid references auth.users,
+  username text,
+  bio text,
+  avatar_url text
+);
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📸 Pages
 
-## Deploy on Vercel
+| Page | Description |
+|---|---|
+| `/` | Home — task grid with progress tracking |
+| `/task/[id]` | Task detail — custom form for each task |
+| `/profile` | User profile with avatar and stats |
+| `/requests` | View submitted tasks and approval status |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 👩‍💻 Built By
+
+**Sanvi Sharma** — Built as a portfolio project targeting Japan's tech industry.
+
+- Demonstrates: Full-stack development, API integration, database design, UI/UX, deployment
+- Relevant for: Japanese tech companies hiring foreign engineers
+
+---
+
+*生活 (Seikatsu) means "daily life" in Japanese 🌸*
+
+
