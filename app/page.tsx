@@ -46,6 +46,13 @@ function AuthModal({onClose}:{onClose:()=>void}) {
   const [message,setMessage]=useState('');
   const supabase=createClient();
 
+  const handleGoogle=async()=>{
+    await supabase.auth.signInWithOAuth({
+      provider:'google',
+      options:{redirectTo:`${window.location.origin}/auth/callback`}
+    });
+  };
+
   const handle=async()=>{
     setLoading(true);setMessage('');
     const{error}=mode==='login'
@@ -65,6 +72,14 @@ function AuthModal({onClose}:{onClose:()=>void}) {
           <div style={{color:'#ff9de2',fontWeight:'700',fontSize:'17px',marginBottom:'4px'}}>{mode==='login'?'おかえり！':'はじめまして！'}</div>
           <div style={{color:'rgba(255,157,226,0.4)',fontSize:'12px'}}>{mode==='login'?'Welcome back':'Create your account'}</div>
         </div>
+
+        {/* Google button */}
+        <button onClick={handleGoogle} style={{width:'100%',background:'white',border:'none',color:'#333',padding:'11px',fontSize:'13px',fontWeight:'700',cursor:'pointer',borderRadius:'12px',marginBottom:'12px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'}}>
+          <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="G"/>
+          Continue with Google
+        </button>
+        <div style={{textAlign:'center',fontSize:'11px',color:'rgba(255,255,255,0.2)',marginBottom:'12px',letterSpacing:'0.5px'}}>— or —</div>
+
         <div style={{display:'flex',flexDirection:'column',gap:'10px',marginBottom:'14px'}}>
           <div>
             <div style={{fontSize:'11px',color:'rgba(255,255,255,0.3)',marginBottom:'5px',letterSpacing:'1px'}}>EMAIL</div>
@@ -184,7 +199,6 @@ export default function Home() {
 
       {showAuth&&<AuthModal onClose={()=>setShowAuth(false)}/>}
 
-      {/* Header */}
       <header style={{position:'sticky',top:0,zIndex:30,background:'rgba(26,10,46,0.92)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(255,157,226,0.1)'}}>
         <div style={{maxWidth:'820px',margin:'0 auto',padding:'12px 16px',display:'flex',alignItems:'center',gap:'10px'}}>
           <Link href="/" style={{display:'flex',alignItems:'center',gap:'8px',flexShrink:0}}>
@@ -194,9 +208,7 @@ export default function Home() {
               <div style={{color:'rgba(255,157,226,0.35)',fontSize:'8px',letterSpacing:'1.5px',marginTop:'1px'}}>生活 · JAPAN GUIDE</div>
             </div>
           </Link>
-
           <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'6px'}}>
-            {/* Progress - hidden on very small screens */}
             <div className="header-extra" style={{display:'flex',alignItems:'center',gap:'6px',padding:'5px 10px',background:'rgba(255,157,226,0.06)',border:'1px solid rgba(255,157,226,0.15)',borderRadius:'20px'}}>
               <span style={{fontSize:'11px'}}>🌸</span>
               <div style={{width:'60px',height:'4px',background:'rgba(255,255,255,0.08)',borderRadius:'10px',overflow:'hidden'}}>
@@ -204,11 +216,9 @@ export default function Home() {
               </div>
               <span style={{fontSize:'10px',color:'#ff9de2',fontWeight:'700'}}>{pct}%</span>
             </div>
-
             <button onClick={()=>setIsJP(!isJP)} style={{padding:'6px 10px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'white',fontSize:'11px',cursor:'pointer',borderRadius:'20px',fontWeight:'700'}}>
               {isJP?'EN':'JP'}
             </button>
-
             {user?(
               <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
                 <Link href="/profile" style={{textDecoration:'none'}}>
@@ -231,7 +241,6 @@ export default function Home() {
       </header>
 
       <main style={{maxWidth:'820px',margin:'0 auto',padding:'28px 16px',position:'relative',zIndex:2}}>
-        {/* Hero */}
         <div style={{textAlign:'center',marginBottom:'32px'}}>
           <div className="hero-emoji" style={{fontSize:'48px',marginBottom:'10px',lineHeight:1}}>🗻</div>
           <h1 className="hero-title" style={{fontSize:'32px',fontWeight:'900',margin:'0 0 8px',lineHeight:1.1}}>
@@ -250,7 +259,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* Stats */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px',marginBottom:'24px'}}>
           {[
             {num:mounted?completed.length:0,label:isJP?'完了':'Completed',emoji:'✅',color:'#00ff9f'},
@@ -265,7 +273,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Category filter */}
         <div className="hide-scroll" style={{display:'flex',gap:'6px',overflowX:'auto',paddingBottom:'4px',marginBottom:'20px'}}>
           {CATS.map(c=>{
             const active=cat===c.key;
@@ -283,7 +290,6 @@ export default function Home() {
           })}
         </div>
 
-        {/* Urgent */}
         {urgent.length>0&&(
           <div style={{marginBottom:'24px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
@@ -297,7 +303,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Normal */}
         {normal.length>0&&(
           <div>
             {urgent.length>0&&(
