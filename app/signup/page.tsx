@@ -34,7 +34,7 @@ export default function SignupPage() {
     const{error} = await supabase.auth.signUp({email,password});
     setLoading(false);
     if(error){ setMessage(error.message); return; }
-    setMessage('Account created! Check your email to confirm, then sign in. 🎌');
+    setMessage('Account created! Now sign in 🎌');
   };
 
   return (

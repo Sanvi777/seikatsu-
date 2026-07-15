@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '../lib/supabase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -39,18 +39,83 @@ function SakuraPetals() {
   );
 }
 
+function AIPanel({onClose}:{onClose:()=>void}) {
+  const [messages,setMessages]=useState([{role:'assistant',content:"こんにちは！ I'm your Japan settlement assistant 🌸 Ask me anything about living in Japan!"}]);
+  const [input,setInput]=useState('');
+  const [loading,setLoading]=useState(false);
+  const bottomRef=useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'});},[messages]);
+
+  const send=async()=>{
+    if(!input.trim()||loading) return;
+    const userMsg=input.trim();
+    setInput('');
+    const newMessages=[...messages,{role:'user',content:userMsg}];
+    setMessages(newMessages);
+    setLoading(true);
+    try {
+      const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:newMessages.slice(1)})});
+      const data=await response.json();
+      const reply=data.content?.[0]?.text||"Sorry, couldn't get a response!";
+      setMessages(prev=>[...prev,{role:'assistant',content:reply}]);
+    } catch {
+      setMessages(prev=>[...prev,{role:'assistant',content:"Connection error. Please try again!"}]);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',background:'rgba(0,0,0,0.8)',backdropFilter:'blur(12px)'}}>
+      <div style={{width:'100%',maxWidth:'500px',height:'75vh',display:'flex',flexDirection:'column',background:'linear-gradient(160deg,#1a0a2e,#0d0820)',border:'1px solid rgba(255,157,226,0.3)',borderRadius:'16px',overflow:'hidden',boxShadow:'0 0 60px rgba(255,157,226,0.15)'}}>
+        <div style={{padding:'16px 20px',borderBottom:'1px solid rgba(255,157,226,0.15)',display:'flex',alignItems:'center',gap:'12px',background:'rgba(255,157,226,0.04)'}}>
+          <div style={{fontSize:'24px'}}>🌸</div>
+          <div>
+            <div style={{color:'#ff9de2',fontWeight:'700',fontSize:'14px'}}>Japan Assistant</div>
+            <div style={{color:'rgba(255,157,226,0.4)',fontSize:'11px'}}>Powered by AI · いつでもどうぞ</div>
+          </div>
+          <button onClick={onClose} style={{marginLeft:'auto',background:'transparent',border:'1px solid rgba(255,157,226,0.2)',color:'#ff9de2',width:'28px',height:'28px',cursor:'pointer',fontSize:'14px',borderRadius:'50%'}}>✕</button>
+        </div>
+        <div style={{flex:1,overflowY:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:'10px'}}>
+          {messages.map((m,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start',gap:'8px',alignItems:'flex-end'}}>
+              {m.role==='assistant'&&<div style={{fontSize:'18px',flexShrink:0}}>🌸</div>}
+              <div style={{maxWidth:'80%',padding:'10px 14px',fontSize:'13px',lineHeight:'1.6',whiteSpace:'pre-wrap',
+                background:m.role==='user'?'rgba(255,157,226,0.15)':'rgba(255,255,255,0.05)',
+                border:m.role==='user'?'1px solid rgba(255,157,226,0.35)':'1px solid rgba(255,255,255,0.08)',
+                color:m.role==='user'?'#ff9de2':'rgba(255,255,255,0.82)',
+                borderRadius:m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
+              }}>{m.content}</div>
+            </div>
+          ))}
+          {loading&&(
+            <div style={{display:'flex',gap:'8px',alignItems:'flex-end'}}>
+              <div style={{fontSize:'18px'}}>🌸</div>
+              <div style={{padding:'10px 16px',fontSize:'13px',color:'rgba(255,157,226,0.5)',border:'1px solid rgba(255,157,226,0.15)',borderRadius:'16px 16px 16px 4px',background:'rgba(255,157,226,0.04)'}}>thinking... ✨</div>
+            </div>
+          )}
+          <div ref={bottomRef}/>
+        </div>
+        <div style={{padding:'12px 16px',borderTop:'1px solid rgba(255,157,226,0.1)',display:'flex',gap:'8px'}}>
+          <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()}
+            placeholder="Ask about Japan life... 🌸"
+            style={{flex:1,background:'rgba(255,157,226,0.06)',border:'1px solid rgba(255,157,226,0.2)',color:'#ff9de2',padding:'10px 14px',fontSize:'13px',outline:'none',borderRadius:'24px'}}
+          />
+          <button onClick={send} disabled={!input.trim()||loading}
+            style={{background:'rgba(255,157,226,0.2)',border:'1px solid rgba(255,157,226,0.4)',color:'#ff9de2',width:'40px',height:'40px',cursor:'pointer',fontSize:'16px',borderRadius:'50%',flexShrink:0,opacity:input.trim()&&!loading?1:0.4}}>↑</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TaskCard({task,completed,isJP}:{task:any,completed:number[],isJP:boolean}) {
   const done=completed.includes(task.id);
   return (
     <Link href={`/task/${task.id}`} style={{textDecoration:'none'}}>
-      <div style={{
-        background:done?'rgba(0,255,100,0.04)':'rgba(255,157,226,0.04)',
-        border:`1px solid ${done?'rgba(0,255,100,0.2)':'rgba(255,157,226,0.15)'}`,
-        borderRadius:'16px',padding:'16px',cursor:'pointer',transition:'all 0.25s',
-        opacity:done?0.65:1,position:'relative',overflow:'hidden',height:'100%',
-      }}
-      onMouseEnter={e=>{(e.currentTarget as HTMLDivElement).style.transform='translateY(-3px)';(e.currentTarget as HTMLDivElement).style.boxShadow='0 8px 30px rgba(255,157,226,0.15)';}}
-      onMouseLeave={e=>{(e.currentTarget as HTMLDivElement).style.transform='translateY(0)';(e.currentTarget as HTMLDivElement).style.boxShadow='none';}}>
+      <div style={{background:done?'rgba(0,255,100,0.04)':'rgba(255,157,226,0.04)',border:`1px solid ${done?'rgba(0,255,100,0.2)':'rgba(255,157,226,0.15)'}`,borderRadius:'16px',padding:'16px',cursor:'pointer',transition:'all 0.25s',opacity:done?0.65:1,position:'relative',overflow:'hidden',height:'100%'}}
+        onMouseEnter={e=>{(e.currentTarget as HTMLDivElement).style.transform='translateY(-3px)';(e.currentTarget as HTMLDivElement).style.boxShadow='0 8px 30px rgba(255,157,226,0.15)';}}
+        onMouseLeave={e=>{(e.currentTarget as HTMLDivElement).style.transform='translateY(0)';(e.currentTarget as HTMLDivElement).style.boxShadow='none';}}>
         <div style={{position:'absolute',right:'-8px',bottom:'-8px',fontSize:'40px',opacity:0.06,lineHeight:1}}>🌸</div>
         <div style={{display:'flex',alignItems:'flex-start',gap:'10px'}}>
           <div style={{fontSize:'26px',lineHeight:1,flexShrink:0}}>{task.emoji}</div>
@@ -59,9 +124,7 @@ function TaskCard({task,completed,isJP}:{task:any,completed:number[],isJP:boolea
               {done&&<span style={{fontSize:'13px'}}>✅</span>}
               {task.urgent&&!done&&<span style={{fontSize:'10px',padding:'2px 7px',background:'rgba(255,100,100,0.12)',border:'1px solid rgba(255,100,100,0.3)',color:'#ff8080',borderRadius:'20px',fontWeight:'700'}}>⚡ URGENT</span>}
             </div>
-            <div style={{fontSize:'13px',fontWeight:'700',color:done?'rgba(255,255,255,0.35)':'#ff9de2',marginBottom:'4px',textDecoration:done?'line-through':'none',lineHeight:1.3}}>
-              {isJP?task.titleJP:task.title}
-            </div>
+            <div style={{fontSize:'13px',fontWeight:'700',color:done?'rgba(255,255,255,0.35)':'#ff9de2',marginBottom:'4px',textDecoration:done?'line-through':'none',lineHeight:1.3}}>{isJP?task.titleJP:task.title}</div>
             <div style={{fontSize:'12px',color:'rgba(255,255,255,0.35)',lineHeight:'1.5',marginBottom:'10px'}}>{task.desc}</div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'4px'}}>
               <span style={{fontSize:'10px',padding:'2px 8px',background:'rgba(255,157,226,0.08)',border:'1px solid rgba(255,157,226,0.15)',color:'rgba(255,157,226,0.6)',borderRadius:'20px'}}>{task.cat}</span>
@@ -81,19 +144,20 @@ export default function HomePage() {
   const [mounted,setMounted]=useState(false);
   const [user,setUser]=useState<any>(null);
   const [loading,setLoading]=useState(true);
+  const [showAI,setShowAI]=useState(false);
   const router=useRouter();
   const supabase=createClient();
 
   useEffect(()=>{
     setMounted(true);
     supabase.auth.getSession().then(({data:{session}})=>{
-      if(!session?.user){ router.push('/'); return; }
+      if(!session?.user){router.push('/');return;}
       setUser(session.user);
       loadCompleted(session.user.id);
       setLoading(false);
     });
     const{data:{subscription}}=supabase.auth.onAuthStateChange((_e,session)=>{
-      if(!session?.user){ router.push('/'); return; }
+      if(!session?.user){router.push('/');return;}
       setUser(session?.user??null);
       if(session?.user) loadCompleted(session.user.id);
     });
@@ -107,7 +171,6 @@ export default function HomePage() {
   };
 
   const signOut=async()=>{await supabase.auth.signOut();router.push('/');};
-
   const filtered=cat==='all'?tasks:tasks.filter(t=>t.cat===cat);
   const urgent=filtered.filter(t=>t.urgent&&!completed.includes(t.id));
   const normal=filtered.filter(t=>!t.urgent||completed.includes(t.id));
@@ -115,7 +178,7 @@ export default function HomePage() {
 
   if(loading) return (
     <div style={{minHeight:'100vh',background:'linear-gradient(180deg,#1a0a2e,#0d0820)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'16px',color:'#ff9de2',fontFamily:'system-ui'}}>
-      <div style={{fontSize:'40px',animation:'floatBob 2s infinite'}}>🌸</div>
+      <div style={{fontSize:'40px'}}>🌸</div>
       <div style={{fontSize:'14px',opacity:0.6}}>Loading...</div>
     </div>
   );
@@ -131,12 +194,11 @@ export default function HomePage() {
         .hide-scroll{scrollbar-width:none;-ms-overflow-style:none}
         .hide-scroll::-webkit-scrollbar{display:none}
         @media(max-width:640px){.task-grid{grid-template-columns:1fr!important}}
-        @media(max-width:480px){.hero-title{font-size:26px!important}.hero-emoji{font-size:40px!important}.header-extra{display:none!important}}
+        @media(max-width:480px){.hero-title{font-size:26px!important}.header-extra{display:none!important}}
       `}</style>
-
       <SakuraPetals/>
       <div style={{position:'fixed',top:'-5%',left:'15%',width:'500px',height:'400px',background:'radial-gradient(ellipse,rgba(255,157,226,0.08) 0%,transparent 70%)',pointerEvents:'none',zIndex:0}}/>
-      <div style={{position:'fixed',bottom:'0',right:'10%',width:'400px',height:'400px',background:'radial-gradient(ellipse,rgba(179,102,255,0.08) 0%,transparent 70%)',pointerEvents:'none',zIndex:0}}/>
+      {showAI&&<AIPanel onClose={()=>setShowAI(false)}/>}
 
       <header style={{position:'sticky',top:0,zIndex:30,background:'rgba(26,10,46,0.92)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(255,157,226,0.1)'}}>
         <div style={{maxWidth:'820px',margin:'0 auto',padding:'12px 16px',display:'flex',alignItems:'center',gap:'10px'}}>
@@ -155,6 +217,9 @@ export default function HomePage() {
               </div>
               <span style={{fontSize:'10px',color:'#ff9de2',fontWeight:'700'}}>{pct}%</span>
             </div>
+            <button onClick={()=>setShowAI(true)} style={{display:'flex',alignItems:'center',gap:'6px',padding:'6px 12px',background:'rgba(255,157,226,0.1)',border:'1px solid rgba(255,157,226,0.3)',color:'#ff9de2',fontSize:'11px',fontWeight:'700',cursor:'pointer',borderRadius:'20px',whiteSpace:'nowrap'}}>
+  ✦ Ask AI
+</button>
             <button onClick={()=>setIsJP(!isJP)} style={{padding:'6px 10px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'white',fontSize:'11px',cursor:'pointer',borderRadius:'20px',fontWeight:'700'}}>
               {isJP?'EN':'JP'}
             </button>
@@ -165,10 +230,8 @@ export default function HomePage() {
                     {user.email?.[0].toUpperCase()}
                   </div>
                 </Link>
-                <Link href="/requests" style={{fontSize:'11px',color:'rgba(255,157,226,0.6)',textDecoration:'none',fontWeight:'600',padding:'5px 8px',background:'rgba(255,157,226,0.06)',border:'1px solid rgba(255,157,226,0.15)',borderRadius:'20px',whiteSpace:'nowrap'}}>
-                  Requests
-                </Link>
-                <button onClick={signOut} style={{background:'none',border:'none',color:'rgba(255,255,255,0.3)',cursor:'pointer',fontSize:'11px',padding:'4px',whiteSpace:'nowrap'}}>out</button>
+                <Link href="/requests" style={{fontSize:'11px',color:'rgba(255,157,226,0.6)',textDecoration:'none',fontWeight:'600',padding:'5px 8px',background:'rgba(255,157,226,0.06)',border:'1px solid rgba(255,157,226,0.15)',borderRadius:'20px',whiteSpace:'nowrap'}}>Requests</Link>
+                <button onClick={signOut} style={{background:'none',border:'none',color:'rgba(255,255,255,0.3)',cursor:'pointer',fontSize:'11px',padding:'4px'}}>out</button>
               </div>
             )}
           </div>
@@ -177,16 +240,11 @@ export default function HomePage() {
 
       <main style={{maxWidth:'820px',margin:'0 auto',padding:'28px 16px',position:'relative',zIndex:2}}>
         <div style={{textAlign:'center',marginBottom:'32px'}}>
-          <div className="hero-emoji" style={{fontSize:'48px',marginBottom:'10px',lineHeight:1}}>🗻</div>
+          <div style={{fontSize:'48px',marginBottom:'10px',lineHeight:1}}>🗻</div>
           <h1 className="hero-title" style={{fontSize:'32px',fontWeight:'900',margin:'0 0 8px',lineHeight:1.1}}>
-            <span style={{color:'#ff9de2'}}>Settle</span>
-            <span style={{color:'white'}}> into </span>
-            <span style={{color:'#ffe066'}}>Japan</span>
-            <span> 🌸</span>
+            <span style={{color:'#ff9de2'}}>Settle</span><span style={{color:'white'}}> into </span><span style={{color:'#ffe066'}}>Japan</span><span> 🌸</span>
           </h1>
-          <p style={{fontSize:'13px',color:'rgba(255,255,255,0.35)',margin:'0'}}>
-            {isJP?'各タスクをクリックして詳細を入力してください。':'Click any task to fill in your details and track your progress.'}
-          </p>
+          <p style={{fontSize:'13px',color:'rgba(255,255,255,0.35)',margin:'0'}}>{isJP?'各タスクをクリックして詳細を入力してください。':'Click any task to fill in your details and track your progress.'}</p>
         </div>
 
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px',marginBottom:'24px'}}>
@@ -206,17 +264,9 @@ export default function HomePage() {
         <div className="hide-scroll" style={{display:'flex',gap:'6px',overflowX:'auto',paddingBottom:'4px',marginBottom:'20px'}}>
           {CATS.map(c=>{
             const active=cat===c.key;
-            return(
-              <button key={c.key} onClick={()=>setCat(c.key)} style={{
-                display:'flex',alignItems:'center',gap:'5px',padding:'7px 12px',borderRadius:'20px',
-                background:active?'rgba(255,157,226,0.15)':'rgba(255,255,255,0.03)',
-                border:active?'1px solid rgba(255,157,226,0.4)':'1px solid rgba(255,255,255,0.07)',
-                color:active?'#ff9de2':'rgba(255,255,255,0.3)',
-                fontSize:'11px',fontWeight:active?'700':'400',cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.2s',flexShrink:0,
-              }}>
-                <span>{c.icon}</span><span>{isJP?c.jp:c.en}</span>
-              </button>
-            );
+            return(<button key={c.key} onClick={()=>setCat(c.key)} style={{display:'flex',alignItems:'center',gap:'5px',padding:'7px 12px',borderRadius:'20px',background:active?'rgba(255,157,226,0.15)':'rgba(255,255,255,0.03)',border:active?'1px solid rgba(255,157,226,0.4)':'1px solid rgba(255,255,255,0.07)',color:active?'#ff9de2':'rgba(255,255,255,0.3)',fontSize:'11px',fontWeight:active?'700':'400',cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.2s',flexShrink:0}}>
+              <span>{c.icon}</span><span>{isJP?c.jp:c.en}</span>
+            </button>);
           })}
         </div>
 
