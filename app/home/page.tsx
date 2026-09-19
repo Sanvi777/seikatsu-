@@ -57,7 +57,7 @@ function AIPanel({onClose}:{onClose:()=>void}) {
     try {
       const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:newMessages.slice(1)})});
       const data=await response.json();
-      const reply=data.content?.[0]?.text||"Sorry, couldn't get a response!";
+      const reply=data.reply||"Sorry, couldn't get a response!";
       setMessages(prev=>[...prev,{role:'assistant',content:reply}]);
     } catch {
       setMessages(prev=>[...prev,{role:'assistant',content:"Connection error. Please try again!"}]);
